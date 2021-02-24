@@ -1,0 +1,5 @@
+pandas==1.1.1
+altair==4.1.0
+streamlit==0.76.0
+numpy==1.19.2
+scikit_learn==0.24.1
