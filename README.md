@@ -16,5 +16,5 @@
 
         `streamlit run Price_RF.py`
 <br> This will run a server
-<br> Use UI for price prediction according to to input data
+<br> Use UI for price prediction according to input data
 <br> If User want to add new dataset then it can be added to the model using "Retrain The Model" button **THE STRUCTURE MUST BE SAME AS PREVIOUS DATASET**
