@@ -73,7 +73,7 @@ def give_me_price(data=None,train=False,file_name='Car details v3.csv'):
             except Exception as e:
                 return e
         else:
-            regressor,helper_df = pd.read_pickle(r'C:/Users/harshit.soni/Desktop/cardekho/model.pkl')
+            regressor,helper_df = pd.read_pickle(r'model.pkl')
         return str(prediction(regressor,input_,helper_df)[0])
 
 @st.cache
