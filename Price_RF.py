@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 import pickle
 from io import StringIO
 import locale
+from sklearn.ensemble import RandomForestRegressor
 
 locale.setlocale(locale.LC_ALL, 'en_IN')
 
@@ -39,7 +40,6 @@ def load_and_preprocess(file_name):
     return [fdf,orignal_res,helper_df]
 
 def model(FEATURES,OUTPUTS,helper_df):
-    from sklearn.ensemble import RandomForestRegressor
     regressor = RandomForestRegressor(n_estimators = 100, random_state = 0)
     regressor.fit(FEATURES, OUTPUTS)
     model = [regressor,helper_df]
@@ -47,20 +47,23 @@ def model(FEATURES,OUTPUTS,helper_df):
     return regressor
 
 def prediction(regressor,input_df,helper_df):
-    col_names = input_df.columns
-    input_df.mileage = input_df.mileage.apply(lambda x:''.join(re.findall(r"[-+]?\d*\.+|\d+",x)))
-    input_df.engine = input_df.engine.apply(lambda x:''.join(re.findall(r"[-+]?\d*\.+|\d+",x)))
-    input_df.max_power = input_df.max_power.apply(lambda x:''.join(re.findall(r"[-+]?\d*\.+|\d+",x)))
-    input_df.torque = input_df.torque.apply(lambda x:''.join(re.findall(r"[-+]?\d*\.+|\d+",x.split("Nm@")[0])))
-    fdf = pd.concat( 
-                    [input_df[['year', 'km_driven','mileage','engine','max_power','torque']],
-                    pd.DataFrame(helper_df["encoder_name"].transform([input_df.name]).toarray()), 
-                    pd.DataFrame(helper_df["encoder_feul"].transform([input_df.fuel]).toarray()),
-                    pd.DataFrame(helper_df["seller_encoder"].transform([input_df.seller_type]).toarray()),
-                    pd.DataFrame(helper_df["trans_encoder"].transform([input_df.transmission]).toarray()),
-                    pd.DataFrame(helper_df["owner_encoder"].transform([input_df.owner]).toarray())],axis=1
-                    )
-    return  regressor.predict(fdf)
+    if input_df is not None:
+        col_names = input_df.columns
+        re_pattern = r"[-+]?\d*\.+|\d+"
+        input_df.mileage = input_df.mileage.apply(lambda x:''.join(re.findall(re_pattern,x)))
+        input_df.engine = input_df.engine.apply(lambda x:''.join(re.findall(re_pattern,x)))
+        input_df.max_power = input_df.max_power.apply(lambda x:''.join(re.findall(re_pattern,x)))
+        input_df.torque = input_df.torque.apply(lambda x:''.join(re.findall(re_pattern,x.split("Nm@")[0])))
+        fdf = pd.concat( 
+                        [input_df[['year', 'km_driven','mileage','engine','max_power','torque']],
+                        pd.DataFrame(helper_df["encoder_name"].transform([input_df.name]).toarray()), 
+                        pd.DataFrame(helper_df["encoder_feul"].transform([input_df.fuel]).toarray()),
+                        pd.DataFrame(helper_df["seller_encoder"].transform([input_df.seller_type]).toarray()),
+                        pd.DataFrame(helper_df["trans_encoder"].transform([input_df.transmission]).toarray()),
+                        pd.DataFrame(helper_df["owner_encoder"].transform([input_df.owner]).toarray())],axis=1
+                        )
+        return  regressor.predict(fdf)
+    return [False]
     
 
 def give_me_price(data=None,train=False,file_name='Car details v3.csv'):
@@ -131,14 +134,15 @@ try:
             """)
         st.write(f"# {locale.format('%d', int(result.split('.')[0]), grouping=True)}. Rs.")
         if st.button('Retrain The model'):
-              user_input = st.text_input("Please Enter File Name or skip",'Car details v3.csv')
-              st.write('Retraining')
-              ret = give_me_price(train=True,file_name=user_input)
-              if ret==True:
-                  st.write('Please Refresh The Page')
-              else:
-                  st.write('error : ',ret)
+            st.write('Retraining')
+            ret = give_me_price(train=True)
+            if ret==True:
+                st.write('Please Refresh The Page')
+                st.button('Refresh')
+            else:
+                st.write('error : ',ret)
             
+        
 
 except urllib.error.URLError as e:
     st.error(
